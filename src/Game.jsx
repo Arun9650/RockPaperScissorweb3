@@ -57,7 +57,7 @@ console.log(Player);
   };
 
   useEffect(() => {
-    if (hasherContractAddress && Player) {
+    if (hasherContractAddress.current && Player) {
       router("/Game", { replace: true });
     }
   }, [Player, router]);
