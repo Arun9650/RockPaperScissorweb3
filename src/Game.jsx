@@ -1,6 +1,6 @@
 import { useContext, useEffect, useRef, useState } from "react";
 import { sepolia, useAccount, useWalletClient } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { ConnectButton, useConnectModal } from "@rainbow-me/rainbowkit";
 import { HasherAbi } from "../constant/abi";
 import { byteCodehasher } from "../constant/byteCodeHasher";
 import { waitForTransaction } from "@wagmi/core";
@@ -73,6 +73,10 @@ console.log(Player);
   };
 
   return (
+      <>
+       <div className="absolute left-20 top-10">
+       <ConnectButton/>
+       </div>
     <div className="flex items-center font-serif justify-center text-[#000000] w-full min-h-screen bg-[#DF6C4F]">
       <div className="border py-5 px-6 bg-[#49c5b6]  text-center rounded-xl  max-w-md">
         <h1 className="text-4xl     font-medium">Create Your Game</h1>
@@ -112,6 +116,7 @@ console.log(Player);
         </button>)}
       </div>
     </div>
+      </>
   );
 };
 

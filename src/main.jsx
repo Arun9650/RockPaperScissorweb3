@@ -16,11 +16,6 @@ import {
 } from "@rainbow-me/rainbowkit/wallets";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
 import {
-  mainnet,
-  polygon,
-  optimism,
-  arbitrum,
-  base,
   sepolia,
 } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
@@ -28,7 +23,7 @@ import { alchemyProvider } from "wagmi/providers/alchemy";
 import { PlayerProvider } from "../context/Player.jsx";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
-  [mainnet, polygon, optimism, arbitrum, base, sepolia],
+  [sepolia],
   [
     publicProvider(),
     alchemyProvider({ apiKey: "7GWcXh1B6TpAJ7LA-AB3uJfyER81S44l" }),
