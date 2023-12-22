@@ -29,12 +29,13 @@ const Play = () => {
 
   const [bet, setBet] = useState(0);
   const [whowins, setWhowins] = useState(null);
-  const [noBet, setNobet] = useState(false);
-
+  const [noBet, setNobet] = useState(true);
+  const [betPlaced, setBetPlaced] = useState(false);
   const [saveClick, setSaveClick] = useState(false);
   //   const [time, setTime] = useState(0);
   const {
     Player,
+    player2Run,
     ContractAddressHasher,
     gamename,
     player1Timer,
@@ -54,13 +55,13 @@ const Play = () => {
   const ContractAddressRSP = useRef(null);
 
   const Hash = async () => {
-    // console.log(ContractAddressHasher);
+    console.log(ContractAddressHasher);
 
     const firstPlayerMove = Number(selectedValue);
     const firstPlayerSalt = Number(salt);
 
-    // console.log("firstPlayerMove", firstPlayerMove);
-    // console.log("firstPlayerSalt", firstPlayerSalt);
+    console.log("firstPlayerMove", firstPlayerMove);
+    console.log("firstPlayerSalt", firstPlayerSalt);
 
     const { request } = await prepareWriteContract({
       abi: HasherAbi,
@@ -78,7 +79,7 @@ const Play = () => {
     });
     setLoding(false);
 
-    // console.log("txWait", txWait);
+    console.log("txWait", txWait);
 
     const result = await readContract({
       address: ContractAddressHasher.current,
@@ -87,7 +88,7 @@ const Play = () => {
       args: [firstPlayerMove, firstPlayerSalt],
     });
     setHash(result);
-    // console.log("result", result);
+    console.log("result", result);
     // console.log("result", typeof result);
   };
 
@@ -118,7 +119,8 @@ const Play = () => {
     // Timer();
     setPlayer1Run(true);
     // startTimer()
-    // setBet(true);
+    setNobet(false);
+    setBetPlaced(true);
 
     player1MakesMove();
   };
@@ -183,16 +185,17 @@ const Play = () => {
     alert("Please Click on Click me to see who wins the game");
 
     // console.log("txwait", txWait);
-
+    setNobet(true);
     player2MakesMove();
     setPlayer2Run(true);
+    setPlayer1Run(false);
   };
 
   const Save = async () => {
     // console.log("contractRSP", ContractAddressRSP.current);
     // console.log("selectedvalue", selectedValue);
     // console.log("salt", ContractAddressRSP.current);
-
+    setPlayer2Run(false);
     const data = await prepareWriteContract({
       abi: RPSabi,
       address: ContractAddressRSP.current,
@@ -225,6 +228,8 @@ const Play = () => {
 
     setWhowins(whoWins);
     console.log("whowindse", whoWins);
+
+ 
   };
   return (
     <>
@@ -297,7 +302,8 @@ const Play = () => {
                 ) : (
                   <button
                     onClick={() => (hash ? RSP() : Hash())}
-                    className="border w-full hover:bg-white uppercase text-black font-serif rounded-md p-1 mt-2 w- px-3"
+                    disabled={betPlaced}
+                    className="border w-full disabled:bg-gray-400 hover:bg-white uppercase text-black font-serif rounded-md p-1 mt-2 w- px-3"
                   >
                     {hash ? "Place a Bet" : "Commit Move"}
                   </button>
@@ -336,7 +342,7 @@ const Play = () => {
                 ) : (
                   <button
                     onClick={() => Play()}
-                    disabled={!hash && !noBet}
+                    disabled={!hash || noBet}
                     className="border disabled:bg-gray-400 uppercase hover:bg-white font-serif text-black w-full  mx-auto rounded-md p-1 mt-2 px-3"
                   >
                     Play
@@ -355,7 +361,8 @@ const Play = () => {
               ) : (
                 <button
                   onClick={() => Save()}
-                  className="border p-2  bg-[#49c5b6]  text-black font-serif rounded-md w-full"
+                  disabled={!betPlaced || !player2Run}
+                  className="border p-2 hover:bg-white disabled:bg-gray-400 bg-[#49c5b6]  text-black font-serif rounded-md w-full"
                 >
                   Click me{" "}
                 </button>
