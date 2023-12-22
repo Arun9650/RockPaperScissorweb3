@@ -247,7 +247,7 @@ const Play = () => {
                 <div className="mb-2">
                   First Player:{" "}
                   <span className="p-1 font-mono bg-white rounded-md text-black">
-                    {address} z
+                    {address} 
                   </span>
                 </div>
                 <div className="flex  flex-col">
@@ -316,7 +316,8 @@ const Play = () => {
                 Make a move before {player2Timer} seconds
               </div>
               <div className="border bg-[#49c5b6]  flex flex-col justify-between  rounded-lg p-5 h-full">
-                <div>second player : {Player}</div>
+                <div>second player : <span className="bg-white p-1 rounded-md text-black font-mono">
+                {Player}</span></div>
                 <div>
                   <div className="flex ">
                     <h1>Choose your move: </h1>
@@ -368,7 +369,7 @@ const Play = () => {
                 </button>
               )}
 
-              {saveClick && <h1>Player 1 {whowins ? "win" : "loss"}</h1>}
+              {saveClick && <h1 className="text-3xl font-serif font-semibold underline">Player 1 {whowins ? "win" : "loss"}</h1>}
             </div>
           </div>
         </div>
