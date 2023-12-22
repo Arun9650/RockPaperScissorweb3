@@ -12,7 +12,7 @@ import { useContext } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { PlayerContext } from "../context/Player";
 import { sepolia } from "wagmi/chains";
-import { parseEther } from "viem";
+import { keccak256, parseEther } from "viem";
 import { byteCodeRPS } from "../constant/byteCodeRSP.js";
 // import Timer from "./Timer.jsx";
 
@@ -54,41 +54,9 @@ const Play = () => {
   const ContractAddressRSP = useRef(null);
 
   const Hash = async () => {
-    // console.log(ContractAddressHasher);
-
     const firstPlayerMove = Number(selectedValue);
     const firstPlayerSalt = Number(salt);
-
-    // console.log("firstPlayerMove", firstPlayerMove);
-    // console.log("firstPlayerSalt", firstPlayerSalt);
-
-    const { request } = await prepareWriteContract({
-      abi: HasherAbi,
-      address: ContractAddressHasher.current,
-      functionName: "hash",
-      args: [firstPlayerMove, firstPlayerSalt],
-    });
-
-    const { hash } = await writeContract(request);
-
-    // console.log("hash", hash);
-    setLoding(true);
-    const txWait = await waitForTransaction({
-      hash: hash,
-    });
-    setLoding(false);
-
-    // console.log("txWait", txWait);
-
-    const result = await readContract({
-      address: ContractAddressHasher.current,
-      abi: HasherAbi,
-      functionName: "hash",
-      args: [firstPlayerMove, firstPlayerSalt],
-    });
-    setHash(result);
-    // console.log("result", result);
-    // console.log("result", typeof result);
+        setHash(keccak256(firstPlayerMove + firstPlayerSalt));
   };
 
   const RSP = async () => {
