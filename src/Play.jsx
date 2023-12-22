@@ -12,7 +12,7 @@ import { useContext } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { PlayerContext } from "../context/Player";
 import { sepolia } from "wagmi/chains";
-import { parseEther } from "viem";
+import { keccak256, parseEther } from "viem";
 import { byteCodeRPS } from "../constant/byteCodeRSP.js";
 // import Timer from "./Timer.jsx";
 
@@ -55,7 +55,7 @@ const Play = () => {
   const ContractAddressRSP = useRef(null);
 
   const Hash = async () => {
-    console.log(ContractAddressHasher);
+    // console.log(ContractAddressHasher);
 
     const firstPlayerMove = Number(selectedValue);
     const firstPlayerSalt = Number(salt);
