@@ -5,6 +5,7 @@ export const PlayerContext = createContext();
 
 // Create a provider for components to consume and subscribe to changes
 export const PlayerProvider = ({ children }) => {
+  
   const [Player, setPlayer] = useState("");
   // const Player = useRef("");
   const [player1Run, setPlayer1Run] = useState(false);
@@ -24,6 +25,7 @@ export const PlayerProvider = ({ children }) => {
 
   useEffect(() => {
   const Player =  localStorage.getItem("Player");
+  ContractAddressHasher.current = localStorage.getItem("ContractAddressHasher");
   if(Player){
     setPlayer(Player);
   }

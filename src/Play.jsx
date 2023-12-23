@@ -55,6 +55,8 @@ const Play = () => {
   });
   // console.log("Player", Player);
 
+  const moves = ['Null', 'Rock', 'Paper', 'Scissors', 'Spock', 'Lizard'];
+
   const ContractAddressRSP = useRef(null);
 
   const router = useNavigate();
@@ -209,9 +211,19 @@ const Play = () => {
       const { hash } = await writeContract(data);
 
       setLoding2(true);
-      const txWait = await waitForTransaction({
+      const txWait =  waitForTransaction({
         hash: hash,
       });
+
+     const result = await  toast.promise(txWait, {
+        loading: "Waiting for transaction to complete",
+          success: "Transaction completed successfully",
+          error: "Transaction failed",
+      })
+
+      console.log("result", result);
+
+
       setLoding2(false);
       alert("Please change your account to first player");
       alert("Please Click on Click me to see who wins the game");
@@ -219,8 +231,10 @@ const Play = () => {
       // console.log("txwait", txWait);
       setNobet(true);
       player2MakesMove();
+      // setPlayer2Run(true);
+      // setPlayer1Run(false);
       setPlayer2Run(true);
-      setPlayer1Run(false);
+      player1Timer.current 
     } catch (error) {
       console.log(error);
       toast.error(error.shortMessage);
@@ -390,8 +404,8 @@ const Play = () => {
                   </div>
                 </div>
                 {loding2 ? (
-                  <button className="border w-full text-black uppercase  mx-auto rounded-md p-1 mt-2 px-3">
-                    Loding...
+                  <button className="border w-full text-black font-serif  mx-auto rounded-md p-1 mt-2 px-3">
+                    Loading...
                   </button>
                 ) : (
                   <button
@@ -406,12 +420,12 @@ const Play = () => {
             </div>
           </div>
           <div className="flex  mt-10 bg-[#DF6C4F] items-center  justify-center">
-            {showWhoWins && <div className="">Player 1 choose {selectedValue}</div>}
+            {showWhoWins && <div className="">Player 1 choose {moves[selectedValue]}</div>}
             <div className=" ">
               <h1>let&apos;s see who wins</h1>
               {loding3 ? (
-                <button className="border p-2 bg-[#49c5b6] uppercase text-black rounded-md w-full">
-                  Loding...
+                <button className="border p-2 font-serif bg-[#49c5b6]  text-black rounded-md w-full">
+                  Loading...
                 </button>
               ) : (
                 <button
@@ -424,12 +438,12 @@ const Play = () => {
               )}
 
               {saveClick && (
-                <h1 className="text-3xl uppercase font-serif font-semibold underline">
+                <h1 className="text-3xl  font-serif font-semibold underline">
                   Player 1 {whowins ? "win" : "loss"}
                 </h1>
               )}
             </div>
-            {showWhoWins && <div>Player 2 Choose {selectedValue2}</div>}
+            {showWhoWins && <div>Player 2 Choose {moves[selectedValue2]}</div>}
           </div>
         </div>
       </div>

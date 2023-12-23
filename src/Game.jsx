@@ -75,6 +75,7 @@ const Game = () => {
         if (result.contractAddress) {
           // setContractAddressHasher(datawait.contractAddress);
           ContractAddressHasher.current = result.contractAddress;
+          localStorage.setItem("ContractAddressHasher", result.contractAddress);
           router("/Play", { replace: true });
         }
       }
