@@ -14,8 +14,8 @@ export const PlayerProvider = ({ children }) => {
   const [timerValue, setTimerValue] = useState(300);
   const [timeover, setTimeOver] = useState(false);
 
-  // const [player1Timer, setPlayer1Timer] = useState(300); // 5 minutes in seconds
-  const player1Timer = useRef(300);
+  const [player1Timer, setPlayer1Timer] = useState(300); // 5 minutes in seconds
+  // const player1Timer = useRef(300);
   const [player2Timer, setPlayer2Timer] = useState(300);
 
 
@@ -38,13 +38,14 @@ export const PlayerProvider = ({ children }) => {
   useEffect(() => {
     let timer;
   
-    if (player1Timer.current > 0 && player2Run.current) {
+    if (player1Timer > 0 && player2Run) {
       timer = setTimeout(() => {
-        player1Timer.current = Math.max(0, player1Timer.current - 1);
+        // player1Timer.current = Math.max(0, player1Timer.current - 1);
+        setPlayer1Timer((prevTimer) => Math.max(0, prevTimer - 1));
       }, 1000);
     }
   
-    else if(player1Timer.current === 0 && player2Run.current){
+    else if(player1Timer === 0 && player2Run){
       setTimeOver(true);
     }
   
@@ -77,8 +78,8 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const player2MakesMove = () => {
-    // setPlayer1Timer(300);
-    player1Timer.current = 300;
+    setPlayer1Timer(300);
+    // player1Timer.current = 300;
   };
 
 

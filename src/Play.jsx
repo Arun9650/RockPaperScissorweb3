@@ -160,7 +160,7 @@ const Play = () => {
 
   useEffect(() => {
     if (timeover) {
-      if (player1Timer.current === 0) {
+      if (player1Timer) {
         (async function () {
           const data = await prepareWriteContract({
             abi: RPSabi,
@@ -177,7 +177,7 @@ const Play = () => {
 
           console.log(txWait);
         })();
-      } else if (player2Timer.current === 0) {
+      } else if (player2Timer) {
         (async function () {
           const data = await prepareWriteContract({
             abi: RPSabi,
@@ -215,6 +215,9 @@ const Play = () => {
         hash: hash,
       });
 
+   
+      setPlayer1Run(false);
+
      const result = await  toast.promise(txWait, {
         loading: "Waiting for transaction to complete",
           success: "Transaction completed successfully",
@@ -230,11 +233,12 @@ const Play = () => {
 
       // console.log("txwait", txWait);
       setNobet(true);
-      player2MakesMove();
-      // setPlayer2Run(true);
-      // setPlayer1Run(false);
       setPlayer2Run(true);
-      player1Timer.current 
+      player2MakesMove();
+     
+      // setPlayer2Run(true);
+      
+      // player1Timer.current 
     } catch (error) {
       console.log(error);
       toast.error(error.shortMessage);
@@ -304,7 +308,7 @@ const Play = () => {
           <div className="flex w-full ">
             <div className="w-1/2  relative flex flex-col  items-center pt-20 ">
               <div className="absolute top-14">
-                click on click me before {player1Timer.current} seconds
+                click on click me before {player1Timer} seconds
               </div>
               <div className="border bg-[#49c5b6]  p-5 rounded-xl">
                 <div className="mb-2">
