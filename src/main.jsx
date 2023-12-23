@@ -21,6 +21,7 @@ import {
 import { publicProvider } from "wagmi/providers/public";
 import { alchemyProvider } from "wagmi/providers/alchemy";
 import { PlayerProvider } from "../context/Player.jsx";
+import { Toaster } from "react-hot-toast";
 
 const { chains, publicClient, webSocketPublicClient } = configureChains(
   [sepolia],
@@ -67,6 +68,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <RainbowKitProvider appInfo={demoAppInfo} chains={chains} >
         <PlayerProvider>
         <App />
+        <Toaster/>
         </PlayerProvider>
       </RainbowKitProvider>
     </WagmiConfig>

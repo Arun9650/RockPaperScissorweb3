@@ -6,13 +6,15 @@ export const PlayerContext = createContext();
 // Create a provider for components to consume and subscribe to changes
 export const PlayerProvider = ({ children }) => {
   const [Player, setPlayer] = useState("");
+  // const Player = useRef("");
   const [player1Run, setPlayer1Run] = useState(false);
   const [player2Run, setPlayer2Run] = useState(false);
   const [timer, setTimer] = useState(null);
   const [timerValue, setTimerValue] = useState(300);
   const [timeover, setTimeOver] = useState(false);
 
-  const [player1Timer, setPlayer1Timer] = useState(300); // 5 minutes in seconds
+  // const [player1Timer, setPlayer1Timer] = useState(300); // 5 minutes in seconds
+  const player1Timer = useRef(300);
   const [player2Timer, setPlayer2Timer] = useState(300);
 
 
@@ -21,20 +23,31 @@ export const PlayerProvider = ({ children }) => {
 
 
   useEffect(() => {
-    let timer;
+  const Player =  localStorage.getItem("Player");
+  if(Player){
+    setPlayer(Player);
+  }
+  },[])
 
-    if (player1Timer > 0 && player2Run) {
+  useEffect(() => {
+    localStorage.setItem("Player", Player);
+  },[Player])
+
+  useEffect(() => {
+    let timer;
+  
+    if (player1Timer.current > 0 && player2Run.current) {
       timer = setTimeout(() => {
-        setPlayer1Timer((prevTimer) => Math.max(0, prevTimer - 1));
+        player1Timer.current = Math.max(0, player1Timer.current - 1);
       }, 1000);
     }
-
-    else if(player1Timer == 0 && player2Run){
-        setTimeOver(true);
+  
+    else if(player1Timer.current === 0 && player2Run.current){
+      setTimeOver(true);
     }
-
+  
     return () => clearTimeout(timer);
-  }, [player1Timer , player2Run]);
+  }, [player1Timer, player2Run]);
 
 
 
@@ -62,34 +75,10 @@ export const PlayerProvider = ({ children }) => {
   };
 
   const player2MakesMove = () => {
-    setPlayer1Timer(300);
+    // setPlayer1Timer(300);
+    player1Timer.current = 300;
   };
 
-  // const startTimer = () => {
-  //   const newTimer = setInterval(() => {
-  //     setTimerValue((prevValue) => {
-  //       if (prevValue === 0 || prevValue === 300) {
-  //         clearInterval(newTimer);
-  //         setTimer(null);
-  //         setTimeOver(true);
-  //         return 0;
-  //       }
-  //       return prevValue - 1;
-  //     });
-  //   }, 1000);
-
-  //   setTimer(newTimer);
-  // };
-
-  // const stopTimer = () => {
-  //   clearInterval(timer);
-  //   setTimer(null);
-  // };
-
-  // const resetTimer = () => {
-  //   setTimer(0);
-  //   stopTimer();
-  // };
 
   return (
     <PlayerContext.Provider

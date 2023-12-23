@@ -6,59 +6,92 @@ import { byteCodehasher } from "../constant/byteCodeHasher";
 import { waitForTransaction } from "@wagmi/core";
 import { useNavigate } from "react-router-dom";
 import { PlayerContext } from "../context/Player";
-
+import { toast } from "react-hot-toast";
+import { isAddress } from 'viem'
 const Game = () => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
   //   console.log(isConnected);
 
-//   const [] = useContext(PlayerContext);
-  const {Player, setPlayer, ContractAddressHasher, setGameName } = useContext(PlayerContext);
-//   const [gameName, setGameName] = useState("");
+  //   const [] = useContext(PlayerContext);
+  const { Player,setPlayer, ContractAddressHasher, setGameName } =
+    useContext(PlayerContext);
+  //   const [gameName, setGameName] = useState("");
   const [player1, setPlayer1] = useState(address);
   const [loding, setLoding] = useState(false);
 
-
-console.log(Player);
+  // console.log(Player.current);
   const hasherContractAddress = useRef(null);
 
   //   const {  } = useRoutes();
 
   const router = useNavigate();
 
+
+  function handlePlayerChange(e) {
+    const value = e.target.value;
+    console.log(value);
+    if (isAddress(value)) {
+     setPlayer(value);
+    }
+  }
+
+
   const { data: walletClient } = useWalletClient({
     chainId: sepolia.id,
   });
 
   const deployHasherContract = async () => {
-    const contractAddress = await walletClient.deployContract({
-      abi: HasherAbi,
-      bytecode: byteCodehasher,
-      account: address,
-      gas: 570560,
-    });
+    try {
+      if (!Player) {
+        toast.error("Please enter player address");
+        return;
+      } else {
+        const TransactionHash  = await walletClient.deployContract({
+          abi: HasherAbi,
+          bytecode: byteCodehasher,
+          account: address,
+          gas: 570560,
+        });
 
-    console.log(contractAddress);
+        console.log(TransactionHash);
 
-    setLoding(true);
-    const datawait = await waitForTransaction({
-      hash: contractAddress,
-    });
-    setLoding(false);
+        setLoding(true);
+        let datawait =  waitForTransaction({
+          hash: TransactionHash,
+        });
+      const result = await  toast.promise(datawait, {
+          loading: "Waiting for transaction to complete",
+          success: "Transaction completed successfully",
+          error: "Transaction failed",
+        })
+        setLoding(false);
 
-    // console.log("datawait", datawait);
-    // console.log(datawait.contractAddress);
-    hasherContractAddress.current = datawait.contractAddress;
-    if (datawait.contractAddress) {
-        // setContractAddressHasher(datawait.contractAddress);
-        ContractAddressHasher.current = datawait.contractAddress;   
-      router("/Game", { replace: true });
+        //  datawait = Promise.resolve(datawait);
+        //  console.log(result);
+        //  console.log(result.contractAddress);
+
+        hasherContractAddress.current = result.contractAddress;
+        if (result.contractAddress) {
+          // setContractAddressHasher(datawait.contractAddress);
+          ContractAddressHasher.current = result.contractAddress;
+          router("/Play", { replace: true });
+        }
+      }
+    } catch (error) {
+      toast.error(error.shortMessage);
+      console.log(error.shortMessage);
     }
   };
 
+
+  useEffect( () =>  {
+    ContractAddressHasher.current = hasherContractAddress.current;
+  },[ContractAddressHasher]) 
+
   useEffect(() => {
     if (hasherContractAddress.current && Player) {
-      router("/Game", { replace: true });
+      router("/Play", { replace: true });
     }
   }, [Player, router]);
 
@@ -73,50 +106,60 @@ console.log(Player);
   };
 
   return (
-      <>
-       <div className="absolute left-20 top-10">
-       <ConnectButton/>
-       </div>
-    <div className="flex items-center font-serif justify-center text-[#000000] w-full min-h-screen bg-[#DF6C4F]">
-      <div className="border py-5 px-6 bg-[#49c5b6]  text-center rounded-xl  max-w-md">
-        <h1 className="text-4xl     font-medium">Create Your Game</h1>
-        <h1 className="text-sm text-white">Name your game and set the opponent</h1>
-        <input
-          type="text"
-          placeholder="Game name"
-          onChange={(e) => setGameName(e.target.value)}
-          className="w-full p-1 rounded-md bg-white my-3"
-        />
-        <h1 className="mt-2 ">Bring Players to your Game</h1>
-        <input
-          type="text"
-          placeholder="Player 1"
-          className="w-full font-mono p-1 rounded-md bg-white mt-2"
-          value={address}
-          onChange={(e) => setPlayer1(e.target.value)}
-        />
-        <input
-          type="text"
-          placeholder="Player 2 address"
-          className="w-full p-1 font-mono rounded-md bg-white  my-3"
-        //   value={Player}
-          onChange={(e) => setPlayer(e.target.value)}
-        />
-       {loding ? (
-
-        <>
-        <button className="border w-full p-1 my-3">
-            Loading...</button></>
-       ) : ( <button
-          onClick={() => connectWallet()}
-          className="border w-full hover:bg-white pointer p-1 my-3 rounded"
-        >
-          
-          {isConnected ? "Build Game" : " Connect Wallet"}
-        </button>)}
+    <>
+      <div className="absolute left-20 top-10">
+        <ConnectButton />
       </div>
-    </div>
-      </>
+      <div className="flex items-center font-serif justify-center text-[#000000] w-full min-h-screen bg-[#DF6C4F]">
+        <div className="border py-5 px-6 bg-[#49c5b6]  text-center rounded-xl  max-w-md">
+          <h1 className="text-4xl     font-medium">Create Your Game</h1>
+          <h1 className="text-sm text-white">
+            Name your game and set the opponent
+          </h1>
+          <input
+            type="text"
+            placeholder="Game name"
+            onChange={(e) => setGameName(e.target.value)}
+            className="w-full p-1 rounded-md bg-white my-3"
+          />
+          <h1 className="mt-2 ">Bring Players to your Game</h1>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault(); // Prevent form from submitting and reloading the page
+              connectWallet();
+            }}
+          >
+            <input
+              type="text"
+              placeholder="Player 1"
+              className="w-full font-mono p-1 rounded-md bg-white mt-2"
+              value={address}
+              onChange={(e) => setPlayer1(e.target.value)}
+            />
+            <input
+              type="text"
+              placeholder="Player 2 address"
+              className="w-full p-1 font-mono rounded-md bg-white  my-3"
+              required
+              onChange={handlePlayerChange}
+            />
+            {loding ? (
+              <>
+                <button className="border w-full p-1 my-3">Loading...</button>
+              </>
+            ) : (
+              <button
+                type="submit"
+                // onClick={() => connectWallet()}
+                className="border w-full hover:bg-white pointer p-1 my-3 rounded"
+              >
+                {isConnected ? "Build Game" : " Connect Wallet"}
+              </button>
+            )}
+          </form>
+        </div>
+      </div>
+    </>
   );
 };
 

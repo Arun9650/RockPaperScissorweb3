@@ -12,8 +12,10 @@ import { useContext } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { PlayerContext } from "../context/Player";
 import { sepolia } from "wagmi/chains";
-import { keccak256, parseEther } from "viem";
+import {  parseEther } from "viem";
 import { byteCodeRPS } from "../constant/byteCodeRSP.js";
+import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 // import Timer from "./Timer.jsx";
 
 const Play = () => {
@@ -26,7 +28,7 @@ const Play = () => {
   const [loding, setLoding] = useState(false);
   const [loding2, setLoding2] = useState(false);
   const [loding3, setLoding3] = useState(false);
-
+  const [showWhoWins, setShowWhoWins] = useState(false);
   const [bet, setBet] = useState(0);
   const [whowins, setWhowins] = useState(null);
   const [noBet, setNobet] = useState(true);
@@ -51,83 +53,112 @@ const Play = () => {
   const { data: walletClient } = useWalletClient({
     chainId: sepolia.id,
   });
+  // console.log("Player", Player);
 
   const ContractAddressRSP = useRef(null);
 
+  const router = useNavigate();
+
   const Hash = async () => {
-    // console.log(ContractAddressHasher);
+    console.log(ContractAddressHasher);
+    try {
+      const firstPlayerMove = Number(selectedValue);
+      const firstPlayerSalt = Number(salt);
 
-    const firstPlayerMove = Number(selectedValue);
-    const firstPlayerSalt = Number(salt);
+      console.log("firstPlayerMove", firstPlayerMove);
+      console.log("firstPlayerSalt", firstPlayerSalt);
 
-    console.log("firstPlayerMove", firstPlayerMove);
-    console.log("firstPlayerSalt", firstPlayerSalt);
+      const { request } = await prepareWriteContract({
+        abi: HasherAbi,
+        address: ContractAddressHasher.current,
+        functionName: "hash",
+        args: [firstPlayerMove, firstPlayerSalt],
+      });
 
-    const { request } = await prepareWriteContract({
-      abi: HasherAbi,
-      address: ContractAddressHasher.current,
-      functionName: "hash",
-      args: [firstPlayerMove, firstPlayerSalt],
-    });
+      const { hash } = await writeContract(request);
 
-    const { hash } = await writeContract(request);
+      // console.log("hash", hash);
+      setLoding(true);
+      // toast.loading("Transaction is in progress");
+      const txWait =  waitForTransaction({
+        hash: hash,
+      });
 
-    // console.log("hash", hash);
-    setLoding(true);
-    const txWait = await waitForTransaction({
-      hash: hash,
-    });
-    setLoding(false);
+      toast.promise(txWait, {
+        loading: "Waiting for transaction to complete",
+        success: "Transaction completed successfully",
+        error: "Transaction failed",
+      });
+      
+      setLoding(false);
 
-    console.log("txWait", txWait);
+      console.log("txWait", txWait);
 
-    const result = await readContract({
-      address: ContractAddressHasher.current,
-      abi: HasherAbi,
-      functionName: "hash",
-      args: [firstPlayerMove, firstPlayerSalt],
-    });
-    setHash(result);
-    console.log("result", result);
+      const result = await readContract({
+        address: ContractAddressHasher.current,
+        abi: HasherAbi,
+        functionName: "hash",
+        args: [firstPlayerMove, firstPlayerSalt],
+      });
+      setHash(result);
+      console.log("result", result);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.shortMessage);
+    }
     // console.log("result", typeof result);
   };
 
   const RSP = async () => {
-    const txhash = await walletClient.deployContract({
-      abi: RPSabi,
-      bytecode: byteCodeRPS,
-      account: address,
-      gas: 5705600,
-      value: parseEther(bet),
-      args: [hash, Player],
-    });
+    try {
+      const txhash = await walletClient.deployContract({
+        abi: RPSabi,
+        bytecode: byteCodeRPS,
+        account: address,
+        gas: 5705600,
+        value: parseEther(bet),
+        args: [hash, Player],
+      });
 
-    // console.log(hash);
-    // console.log(txhash);
+      // console.log(hash);
+      // console.log(txhash);
 
-    setLoding(true);
-    const contractAddress = await waitForTransaction({
-      hash: txhash,
-    });
-    setLoding(false);
+      setLoding(true);
+      const transactionHash =  waitForTransaction({
+        hash: txhash,
+      });
+      setLoding(false);
+    
+   const result =  await    toast.promise(transactionHash, {
+        loading: "Waiting for transaction to complete",
+          success: "Transaction completed successfully",
+          error: "Transaction failed",
+      });
 
-    alert("Please change your account to second player");
-    // console.log(contractAddress);
 
-    ContractAddressRSP.current = contractAddress.contractAddress;
 
-    // Timer();
-    setPlayer1Run(true);
-    // startTimer()
-    setNobet(false);
-    setBetPlaced(true);
 
-    player1MakesMove();
+      alert("Please change your account to second player");
+      // console.log(contractAddress);
+
+      ContractAddressRSP.current = result.contractAddress;
+
+      // Timer();
+      setPlayer1Run(true);
+      // startTimer()
+      setNobet(false);
+      setBetPlaced(true);
+
+      player1MakesMove();
+    } catch (error) {
+      console.log(error);
+      toast.error(error.shortMessage);
+    }
   };
 
   useEffect(() => {
     if (timeover) {
-      if (player1Timer == 0) {
+      if (player1Timer.current === 0) {
         (async function () {
           const data = await prepareWriteContract({
             abi: RPSabi,
@@ -144,7 +175,7 @@ const Play = () => {
 
           console.log(txWait);
         })();
-      } else if (player2Timer == 0) {
+      } else if (player2Timer.current === 0) {
         (async function () {
           const data = await prepareWriteContract({
             abi: RPSabi,
@@ -162,92 +193,110 @@ const Play = () => {
         })();
       }
     }
-  }, [player1Timer, player2Timer, timeover]);
+  }, [timeover, player1Timer, player2Timer, address]);
 
   const Play = async () => {
-    console.log("contractRSP", ContractAddressRSP.current);
-    const data = await prepareWriteContract({
-      abi: RPSabi,
-      address: ContractAddressRSP.current,
-      functionName: "play",
-      args: [Number(selectedValue2)],
-      value: parseEther(bet),
-    });
+    try {
+      console.log("contractRSP", ContractAddressRSP.current);
+      const data = await prepareWriteContract({
+        abi: RPSabi,
+        address: ContractAddressRSP.current,
+        functionName: "play",
+        args: [Number(selectedValue2)],
+        value: parseEther(bet),
+      });
 
-    const { hash } = await writeContract(data);
+      const { hash } = await writeContract(data);
 
-    setLoding2(true);
-    const txWait = await waitForTransaction({
-      hash: hash,
-    });
-    setLoding2(false);
-    alert("Please change your account to first player");
-    alert("Please Click on Click me to see who wins the game");
+      setLoding2(true);
+      const txWait = await waitForTransaction({
+        hash: hash,
+      });
+      setLoding2(false);
+      alert("Please change your account to first player");
+      alert("Please Click on Click me to see who wins the game");
 
-    // console.log("txwait", txWait);
-    setNobet(true);
-    player2MakesMove();
-    setPlayer2Run(true);
-    setPlayer1Run(false);
+      // console.log("txwait", txWait);
+      setNobet(true);
+      player2MakesMove();
+      setPlayer2Run(true);
+      setPlayer1Run(false);
+    } catch (error) {
+      console.log(error);
+      toast.error(error.shortMessage);
+    }
   };
 
   const Save = async () => {
     // console.log("contractRSP", ContractAddressRSP.current);
     // console.log("selectedvalue", selectedValue);
     // console.log("salt", ContractAddressRSP.current);
-    setPlayer2Run(false);
-    const data = await prepareWriteContract({
-      abi: RPSabi,
-      address: ContractAddressRSP.current,
-      functionName: "solve",
-      args: [Number(selectedValue), Number(salt)],
-    });
+    try {
+      setPlayer2Run(false);
+      const data = await prepareWriteContract({
+        abi: RPSabi,
+        address: ContractAddressRSP.current,
+        functionName: "solve",
+        args: [Number(selectedValue), Number(salt)],
+      });
 
-    const hash = await writeContract(data);
+      const hash = await writeContract(data);
 
-    setLoding3(true);
+      setLoding3(true);
 
-    const txWait = await waitForTransaction({
-      hash: hash.hash,
-    });
-    setLoding3(false);
-    setSaveClick(true);
+      const txWait = await waitForTransaction({
+        hash: hash.hash,
+      });
+      setLoding3(false);
+      setSaveClick(true);
 
-    console.log("txWait", txWait);
+      console.log("txWait", txWait);
 
-    console.log("hash", hash);
-    console.log("selce", selectedValue);
-    console.log("selce2", selectedValue2);
-    console.log("Contract ", ContractAddressRSP.current);
-    const whoWins = await readContract({
-      abi: RPSabi,
-      address: ContractAddressRSP.current,
-      functionName: "win",
-      args: [Number(selectedValue), Number(selectedValue2)],
-    });
+      console.log("hash", hash);
+      console.log("selce", selectedValue);
+      console.log("selce2", selectedValue2);
+      console.log("Contract ", ContractAddressRSP.current);
+      const whoWins = await readContract({
+        abi: RPSabi,
+        address: ContractAddressRSP.current,
+        functionName: "win",
+        args: [Number(selectedValue), Number(selectedValue2)],
+      });
 
-    setWhowins(whoWins);
-    console.log("whowindse", whoWins);
-
- 
+      setWhowins(whoWins);
+      setShowWhoWins(true);
+      console.log("whowindse", whoWins);
+    } catch (error) {
+      setPlayer2Run(true);
+      console.log(error);
+      toast.error(error.shortMessage);
+    }
   };
   return (
     <>
-      <div className="flex h-screen    bg-[#DF6C4F]  p-4">
+      <div className="flex h-screen   relative bg-[#DF6C4F]  p-4">
+        <div className="absolute left-32 z-20">
+          <button
+            className="w-full  hover:text-white underline text-black font-mono"
+            onClick={() => router("/")}
+          >
+            Back to Home
+          </button>
+        </div>
         <div className="  flex flex-col w-full ">
           <div className="mx-auto  text-black underline text-3xl ">
-            {gamename}
+            {gamename ? gamename : "Rock Paper Scissor"}
           </div>
           <div className="flex w-full ">
             <div className="w-1/2  relative flex flex-col  items-center pt-20 ">
               <div className="absolute top-14">
-                click on click me before {player1Timer} seconds
+                click on click me before {player1Timer.current} seconds
               </div>
               <div className="border bg-[#49c5b6]  p-5 rounded-xl">
                 <div className="mb-2">
                   First Player:{" "}
                   <span className="p-1 font-mono bg-white rounded-md text-black">
-                    {address} 
+                    {address}
                   </span>
                 </div>
                 <div className="flex  flex-col">
@@ -316,8 +365,12 @@ const Play = () => {
                 Make a move before {player2Timer} seconds
               </div>
               <div className="border bg-[#49c5b6]  flex flex-col justify-between  rounded-lg p-5 h-full">
-                <div>second player : <span className="bg-white p-1 rounded-md text-black font-mono">
-                {Player}</span></div>
+                <div>
+                  second player :{" "}
+                  <span className="bg-white p-1 rounded-md text-black font-mono">
+                    {Player}
+                  </span>
+                </div>
                 <div>
                   <div className="flex ">
                     <h1>Choose your move: </h1>
@@ -337,7 +390,7 @@ const Play = () => {
                   </div>
                 </div>
                 {loding2 ? (
-                  <button className="border w-full  mx-auto rounded-md p-1 mt-2 px-3">
+                  <button className="border w-full text-black uppercase  mx-auto rounded-md p-1 mt-2 px-3">
                     Loding...
                   </button>
                 ) : (
@@ -352,25 +405,31 @@ const Play = () => {
               </div>
             </div>
           </div>
-          <div className="flex mt-10 bg-[#DF6C4F] items-center justify-center">
-            <div>
+          <div className="flex  mt-10 bg-[#DF6C4F] items-center  justify-center">
+            {showWhoWins && <div className="">Player 1 choose {selectedValue}</div>}
+            <div className=" ">
               <h1>let&apos;s see who wins</h1>
               {loding3 ? (
-                <button className="border p-2 rounded-md w-full">
+                <button className="border p-2 bg-[#49c5b6] uppercase text-black rounded-md w-full">
                   Loding...
                 </button>
               ) : (
                 <button
                   onClick={() => Save()}
                   disabled={!betPlaced || !player2Run}
-                  className="border p-2 hover:bg-white disabled:bg-gray-400 bg-[#49c5b6]  text-black font-serif rounded-md w-full"
+                  className="border p-2 hover:bg-white uppercase disabled:bg-gray-400 bg-[#49c5b6]  text-black font-serif rounded-md w-full"
                 >
                   Click me{" "}
                 </button>
               )}
 
-              {saveClick && <h1 className="text-3xl font-serif font-semibold underline">Player 1 {whowins ? "win" : "loss"}</h1>}
+              {saveClick && (
+                <h1 className="text-3xl uppercase font-serif font-semibold underline">
+                  Player 1 {whowins ? "win" : "loss"}
+                </h1>
+              )}
             </div>
+            {showWhoWins && <div>Player 2 Choose {selectedValue2}</div>}
           </div>
         </div>
       </div>
